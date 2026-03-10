@@ -3,6 +3,7 @@ from Steering import Steering #Steering Class
 from comparator import Comparator #comparator Class
 from Reporter import Reporter #Reporting Class
 import argparse
+import json
 import os
 from pathlib import Path
 
@@ -58,13 +59,26 @@ class Supervisor:
 
         print("Saved steering to both run_ref and run_test.\n")
 
-        #run reference pipeline
-        print("RUN 1: Reference")
-        DataFlow(str(json_ref)).run_full_pipeline()
+        #creates two different subshells
+        with open(json_ref) as f:
+            ref_config = json.load(f)
 
-        #run test pipeline
+        with open(json_test) as f:
+            test_config = json.load(f)
+
+        env_ref = ref_config["Megalib Main Branch Source"]
+        env_test = test_config["Megalib V2 Source"]
+
+        print(f"Reference MEGAlib source: {env_ref}")
+        print(f"Test MEGAlib source: {env_test}\n")
+
+        #reference pipeline
+        print("RUN 1: Reference")
+        DataFlow(str(json_ref), env_script=env_ref).run_full_pipeline()
+
+        #test pipeline
         print("RUN 2: Test")
-        DataFlow(str(json_test)).run_full_pipeline()
+        DataFlow(str(json_test), env_script=env_test).run_full_pipeline()
 
         #compare results
         ref_hist = run_ref / "results" / "energy_hist.json"
@@ -89,7 +103,7 @@ class Supervisor:
         ref_meta = run_ref / "results" / "spectrum_meta.json"
         test_meta = run_test / "results" / "spectrum_meta.json"
 
-        import json
+ 
         with open(ref_meta) as f:
             ref_png = json.load(f)["spectrum_png"]
         with open(test_meta) as f:
